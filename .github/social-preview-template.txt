@@ -71,7 +71,7 @@ DESIGN TOOL RECOMMENDATIONS:
    - Export as PNG
 
 UPLOAD INSTRUCTIONS:
-1. Go to: https://github.com/EhsanAzish80/devscope/settings
+1. Go to: https://github.com/EhsanAzish80/Devscope/settings
 2. Scroll to "Social preview"
 3. Click "Upload an image"
 4. Select your 1280x640 PNG file

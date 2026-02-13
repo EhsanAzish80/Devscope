@@ -35,7 +35,7 @@ if [ -f "$OUTPUT" ]; then
     echo "Next steps:"
     echo "  1. Review the image"
     echo "  2. Optionally edit with design tool for better polish"
-    echo "  3. Upload to: https://github.com/EhsanAzish80/devscope/settings"
+    echo "  3. Upload to: https://github.com/EhsanAzish80/Devscope/settings"
     echo "     (Scroll to 'Social preview' section)"
 else
     echo "❌ Failed to create image"

@@ -4,7 +4,7 @@
 
 Analyze any repository in seconds. Get a maintainability grade, risk level, onboarding difficulty, and a CI-ready quality gate — zero configuration.
 
-[![CI Status](https://github.com/EhsanAzish80/devscope/workflows/CI/badge.svg)](https://github.com/EhsanAzish80/devscope/actions)
+[![CI Status](https://github.com/EhsanAzish80/Devscope/workflows/CI/badge.svg)](https://github.com/EhsanAzish80/Devscope/actions)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests: 133 passing](https://img.shields.io/badge/tests-133%20passing-brightgreen.svg)]()
@@ -468,8 +468,8 @@ This project follows rigorous engineering standards:
 ### Quick Start
 
 ```bash
-git clone https://github.com/EhsanAzish80/devscope.git
-cd devscope
+git clone https://github.com/EhsanAzish80/Devscope.git
+cd Devscope
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv sync --all-extras
 uv run devscope scan
@@ -562,9 +562,9 @@ Inspired by [tokei](https://github.com/XAMPPRocky/tokei) and [cloc](https://gith
 
 ## 📞 Support
 
-- 🐛 [Report a bug](https://github.com/EhsanAzish80/devscope/issues)
-- 💡 [Request a feature](https://github.com/EhsanAzish80/devscope/issues)
-- 📖 [Documentation](https://github.com/EhsanAzish80/devscope#readme)
+- 🐛 [Report a bug](https://github.com/EhsanAzish80/Devscope/issues)
+- 💡 [Request a feature](https://github.com/EhsanAzish80/Devscope/issues)
+- 📖 [Documentation](https://github.com/EhsanAzish80/Devscope#readme)
 
 ---
 

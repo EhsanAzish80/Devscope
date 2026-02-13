@@ -53,7 +53,7 @@ Background: Semi-transparent dark box with rounded corners
 - Photopea (Photoshop alternative): https://photopea.com
 
 ## Upload
-1. Go to: https://github.com/EhsanAzish80/devscope/settings
+1. Go to: https://github.com/EhsanAzish80/Devscope/settings
 2. Scroll to "Social preview"
 3. Upload the 1280x640 PNG
 
