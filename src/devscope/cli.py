@@ -278,11 +278,10 @@ def check_ci_thresholds(result: AnalysisResult, thresholds: CIThresholds) -> CIR
         )
 
     # Check onboarding difficulty threshold
-    if thresholds.max_onboarding:
-        if health.onboarding_difficulty > thresholds.max_onboarding:
-            failures.append(
-                f"Onboarding difficulty {health.onboarding_difficulty.value} exceeds maximum {thresholds.max_onboarding.value}"
-            )
+    if thresholds.max_onboarding and health.onboarding_difficulty > thresholds.max_onboarding:
+        failures.append(
+            f"Onboarding difficulty {health.onboarding_difficulty.value} exceeds maximum {thresholds.max_onboarding.value}"
+        )
 
     return CIResult(
         passed=len(failures) == 0,
@@ -580,7 +579,7 @@ def ci(
 def summary(
     path: Optional[str],
     no_git: bool,
-    output_markdown: bool,
+    output_markdown: bool,  # noqa: ARG001
     badges: bool,
     compact: bool,
     output_json: bool,

@@ -92,12 +92,12 @@ class ScoringEngine:
             },
         )
 
-    def _score_complexity(self, complexity: ComplexityMetrics, total_files: int) -> float:
+    def _score_complexity(self, complexity: ComplexityMetrics, total_files: int) -> float:  # noqa: ARG002
         """Score complexity metrics.
 
         Args:
             complexity: Complexity metrics
-            total_files: Total number of files
+            total_files: Total number of files (reserved for future use)
 
         Returns:
             Score from 0-100 (higher is better)
@@ -357,9 +357,8 @@ class ScoringEngine:
             difficulty_score += 10
 
         # Low activity suggests outdated/stale docs
-        if git_metrics.is_git_repo and git_metrics.days_since_last_commit:
-            if git_metrics.days_since_last_commit > 365:
-                difficulty_score += 15
+        if git_metrics.is_git_repo and git_metrics.days_since_last_commit and git_metrics.days_since_last_commit > 365:
+            difficulty_score += 15
 
         # Classify
         if difficulty_score >= 50:

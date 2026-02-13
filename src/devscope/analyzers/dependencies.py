@@ -210,9 +210,9 @@ class DependencyDetector:
                 elif line and not line.startswith("module") and not line.startswith("go "):
                     # Multi-line require block
                     parts = line.split()
-                    if parts and not parts[0].startswith("//"):
-                        if "/" in parts[0]:  # Looks like a module path
-                            deps.append(parts[0])
+                    if parts and not parts[0].startswith("//") and "/" in parts[0]:
+                        # Looks like a module path
+                        deps.append(parts[0])
 
             if deps:
                 return DependencyInfo(
