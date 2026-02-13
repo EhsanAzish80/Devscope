@@ -694,6 +694,25 @@ def inject(
             console.print(f"    {end_marker}\n")
             sys.exit(1)
         
+        # Extract sections to prepare clean version for analysis
+        start_idx = original_content.find(start_marker)
+        end_idx = original_content.find(end_marker)
+        
+        if start_idx == -1 or end_idx == -1 or start_idx >= end_idx:
+            console.print(f"[red]Error:[/red] Invalid marker positions in {readme_file.name}")
+            sys.exit(1)
+        
+        # Extract existing health block
+        start_idx = original_content.find(start_marker)
+        end_idx = original_content.find(end_marker)
+        
+        if start_idx == -1 or end_idx == -1 or start_idx >= end_idx:
+            console.print(f"[red]Error:[/red] Invalid marker positions in {readme_file.name}")
+            sys.exit(1)
+        
+        before_marker = original_content[:start_idx + len(start_marker)]
+        after_marker = original_content[end_idx:]
+        
         # Set up cache manager
         cache_manager = None
         if not no_cache:
@@ -713,23 +732,18 @@ def inject(
         
         result = analyzer.analyze()
         
-        # Generate health block
+        # Exclude README from line count to avoid circular dependency
+        # (health block content affects the total lines, which is displayed in the health block)
+        if scan_path in readme_file.parents:
+            readme_lines = len(original_content.splitlines())
+            result.total_lines = max(0, result.total_lines - readme_lines)
+            # Also decrement file count
+            result.total_files = max(1, result.total_files - 1)
+        
+        # Generate new health block
         health_block = generate_health_block(result)
         
         # Build new content
-        start_idx = original_content.find(start_marker)
-        end_idx = original_content.find(end_marker)
-        
-        if start_idx == -1 or end_idx == -1 or start_idx >= end_idx:
-            console.print(f"[red]Error:[/red] Invalid marker positions in {readme_file.name}")
-            sys.exit(1)
-        
-        # Extract sections carefully to preserve spacing
-        before_marker = original_content[:start_idx + len(start_marker)]
-        after_marker = original_content[end_idx:]
-        
-        # Build new content with health block
-        # Ensure exactly one newline before health block, and health block ends with newline
         if not health_block.endswith('\n'):
             health_block += '\n'
         
@@ -737,6 +751,7 @@ def inject(
         
         # Check if content changed
         if new_content == original_content:
+            # No change needed - file already has correct content
             if check:
                 console.print(f"[green]✓[/green] No changes needed")
                 sys.exit(0)
