@@ -18,6 +18,7 @@ from devscope.analyzers.git_intel import GitIntelligence
 from devscope.analyzers.hotspots import HotspotDetector
 from devscope.analyzers.scoring import ScoringEngine
 from devscope.analyzers.tests import TestDetector
+from devscope.cache import CacheManager
 from devscope.models import AnalysisResult
 from devscope.utils import get_gitignore_matcher, is_binary_file
 
@@ -98,17 +99,19 @@ class CodebaseAnalyzer:
         ".vs",
     }
 
-    def __init__(self, root_path: Path, detect_git: bool = True, enable_intelligence: bool = True):
+    def __init__(self, root_path: Path, detect_git: bool = True, enable_intelligence: bool = True, cache_manager: Optional[CacheManager] = None):
         """Initialize the analyzer.
 
         Args:
             root_path: Root directory to analyze
             detect_git: Whether to detect and use git repository info
             enable_intelligence: Whether to run extended intelligence analysis
+            cache_manager: Optional cache manager for performance
         """
         self.root_path = root_path
         self.detect_git = detect_git
         self.enable_intelligence = enable_intelligence
+        self.cache_manager = cache_manager
         self.repo_name: Optional[str] = None
         self.git_root: Optional[Path] = None
 
@@ -209,8 +212,21 @@ class CodebaseAnalyzer:
                 total_files += 1
                 all_files.append(item)
 
-                # Count lines
-                lines = self._count_lines(item)
+                # Check cache first
+                language = None
+                if self.cache_manager:
+                    cached = self.cache_manager.get(item)
+                    if cached:
+                        lines = cached.lines
+                        language = cached.language
+                    else:
+                        lines = self._count_lines(item)
+                        if item.suffix:
+                            language = self.LANGUAGE_MAP.get(item.suffix.lower())
+                        self.cache_manager.set(item, lines, language)
+                else:
+                    lines = self._count_lines(item)
+
                 total_lines += lines
 
                 # Track for extended analysis
@@ -245,6 +261,21 @@ class CodebaseAnalyzer:
 
         scan_time = time.time() - start_time
 
+        # Collect cache stats
+        cache_stats_dict = None
+        if self.cache_manager:
+            stats = self.cache_manager.stats
+            cache_stats_dict = {
+                "enabled": stats.enabled,
+                "hits": stats.hits,
+                "misses": stats.misses,
+                "total_files": stats.total_files,
+                "hit_rate": round(stats.hit_rate, 2),
+                "time_saved_estimate": round(stats.time_saved_estimate, 3),
+            }
+            # Save cache to disk
+            self.cache_manager.save()
+
         # Base result (backward compatible)
         result = AnalysisResult(
             repo_name=self.repo_name or self.root_path.name,
@@ -253,6 +284,7 @@ class CodebaseAnalyzer:
             languages=languages,
             largest_dirs=largest_dirs,
             scan_time=scan_time,
+            cache_stats=cache_stats_dict,
         )
 
         # Extended intelligence analysis

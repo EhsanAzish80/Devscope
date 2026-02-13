@@ -229,18 +229,19 @@ class TestCLIJSONOutput:
             assert analysis["health_score"] is None
 
     def test_ci_command_outputs_json(self) -> None:
-        """Test ci command always outputs JSON."""
+        """Test ci command outputs JSON with --json flag."""
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             (root / "test.py").write_text("x = 1\n")
 
             runner = CliRunner()
-            result = runner.invoke(cli, ["ci", str(root), "--no-git"])
+            result = runner.invoke(cli, ["ci", str(root), "--no-git", "--json"])
 
             assert result.exit_code == 0
             output_data = json.loads(result.output)
             assert "schema_version" in output_data
             assert "analysis" in output_data
+            assert "ci" in output_data
 
     def test_ci_command_always_full_intelligence(self) -> None:
         """Test ci command always runs full intelligence analysis."""
@@ -249,7 +250,7 @@ class TestCLIJSONOutput:
             (root / "test.py").write_text("x = 1\n" * 50)
 
             runner = CliRunner()
-            result = runner.invoke(cli, ["ci", str(root), "--no-git"])
+            result = runner.invoke(cli, ["ci", str(root), "--no-git", "--json"])
 
             assert result.exit_code == 0
             output_data = json.loads(result.output)
@@ -260,13 +261,13 @@ class TestCLIJSONOutput:
             assert analysis["health_score"] is not None
 
     def test_ci_command_no_banner(self) -> None:
-        """Test ci command produces no interactive output."""
+        """Test ci command produces no interactive output in JSON mode."""
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             (root / "test.py").write_text("x = 1\n")
 
             runner = CliRunner()
-            result = runner.invoke(cli, ["ci", str(root), "--no-git"])
+            result = runner.invoke(cli, ["ci", str(root), "--no-git", "--json"])
 
             # Output should be pure JSON (first char should be {)
             assert result.output.strip().startswith("{")

@@ -1,5 +1,6 @@
 """CLI interface for devscope."""
 
+import json
 import sys
 from pathlib import Path
 from typing import Optional
@@ -11,7 +12,20 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from devscope.analyzer import CodebaseAnalyzer
-from devscope.models import AnalysisResult
+from devscope.cache import CacheManager
+from devscope.formatters import (
+    generate_compact_summary,
+    generate_json_summary,
+    generate_markdown_summary,
+)
+from devscope.models import (
+    AnalysisResult,
+    CIResult,
+    CIThresholds,
+    Grade,
+    OnboardingDifficulty,
+    RiskLevel,
+)
 
 console = Console()
 
@@ -217,6 +231,127 @@ def create_git_panel(result: AnalysisResult) -> Panel:
     return Panel(content, title="📊 Git Activity", border_style="blue")
 
 
+def check_ci_thresholds(result: AnalysisResult, thresholds: CIThresholds) -> CIResult:
+    """Check if analysis result meets CI thresholds.
+
+    Args:
+        result: Analysis result to check
+        thresholds: CI threshold configuration
+
+    Returns:
+        CIResult with pass/fail status and failure reasons
+    """
+    failures: list[str] = []
+    actual_grade = None
+    actual_risk = None
+    actual_onboarding = None
+
+    if not result.health_score:
+        # No health score available - fail if any thresholds set
+        if thresholds.min_grade or thresholds.max_risk or thresholds.max_onboarding:
+            failures.append("Health score not available (run with intelligence enabled)")
+            return CIResult(
+                passed=False,
+                thresholds=thresholds,
+                failures=failures,
+            )
+        # No thresholds, no health score - pass
+        return CIResult(passed=True, thresholds=thresholds)
+
+    health = result.health_score
+    actual_grade = health.maintainability_grade
+    actual_risk = health.risk_level.value
+    actual_onboarding = health.onboarding_difficulty.value
+
+    # Check grade threshold
+    if thresholds.min_grade:
+        try:
+            current_grade = Grade.from_string(health.maintainability_grade)
+            if current_grade > thresholds.min_grade:
+                failures.append(
+                    f"Grade {current_grade.value} is below minimum {thresholds.min_grade.value}"
+                )
+        except ValueError as e:
+            failures.append(f"Invalid grade comparison: {e}")
+
+    # Check risk level threshold
+    if thresholds.max_risk:
+        if health.risk_level > thresholds.max_risk:
+            failures.append(
+                f"Risk level {health.risk_level.value} exceeds maximum {thresholds.max_risk.value}"
+            )
+
+    # Check onboarding difficulty threshold
+    if thresholds.max_onboarding:
+        if health.onboarding_difficulty > thresholds.max_onboarding:
+            failures.append(
+                f"Onboarding difficulty {health.onboarding_difficulty.value} exceeds maximum {thresholds.max_onboarding.value}"
+            )
+
+    return CIResult(
+        passed=len(failures) == 0,
+        thresholds=thresholds,
+        actual_grade=actual_grade,
+        actual_risk=actual_risk,
+        actual_onboarding=actual_onboarding,
+        failures=failures,
+    )
+
+
+def print_ci_summary(result: AnalysisResult, ci_result: CIResult) -> None:
+    """Print compact CI summary.
+
+    Args:
+        result: Analysis result
+        ci_result: CI threshold check result
+    """
+    console.print("\n[bold cyan]═══ CI Analysis Summary ═══[/bold cyan]\n")
+
+    # Repository info
+    console.print(f"[dim]Repository:[/dim] {result.repo_name or 'Unknown'}")
+    console.print(f"[dim]Files:[/dim] {result.total_files:,}  [dim]Lines:[/dim] {result.total_lines:,}\n")
+
+    # Health metrics
+    if result.health_score:
+        health = result.health_score
+        grade_color = {
+            "A": "green",
+            "B": "green",
+            "C": "yellow",
+            "D": "orange",
+            "F": "red",
+        }.get(health.maintainability_grade, "white")
+
+        console.print(f"[bold]Code Health:[/bold]")
+        console.print(f"  Grade: [{grade_color}]{health.maintainability_grade}[/{grade_color}]")
+        console.print(f"  Risk Level: {health.risk_level.value}")
+        console.print(f"  Onboarding: {health.onboarding_difficulty.value}\n")
+
+    # Thresholds
+    if (
+        ci_result.thresholds.min_grade
+        or ci_result.thresholds.max_risk
+        or ci_result.thresholds.max_onboarding
+    ):
+        console.print("[bold]Thresholds:[/bold]")
+        if ci_result.thresholds.min_grade:
+            console.print(f"  Minimum Grade: {ci_result.thresholds.min_grade.value}")
+        if ci_result.thresholds.max_risk:
+            console.print(f"  Maximum Risk: {ci_result.thresholds.max_risk.value}")
+        if ci_result.thresholds.max_onboarding:
+            console.print(f"  Maximum Onboarding: {ci_result.thresholds.max_onboarding.value}")
+        console.print()
+
+    # Result status
+    if ci_result.passed:
+        console.print("[bold green]✓ All thresholds passed[/bold green]\n")
+    else:
+        console.print("[bold red]✗ Threshold violations:[/bold red]")
+        for failure in ci_result.failures:
+            console.print(f"  • {failure}")
+        console.print()
+
+
 @click.group()
 @click.version_option(version="0.1.0", prog_name="devscope")
 def cli() -> None:
@@ -229,7 +364,9 @@ def cli() -> None:
 @click.option("--no-git", is_flag=True, help="Skip git repository detection")
 @click.option("--basic", is_flag=True, help="Show only basic analysis (faster)")
 @click.option("--json", "output_json", is_flag=True, help="Output results as JSON")
-def scan(path: Optional[str], no_git: bool, basic: bool, output_json: bool) -> None:
+@click.option("--no-cache", is_flag=True, help="Disable caching for this scan")
+@click.option("--clear-cache", is_flag=True, help="Clear cache before scanning")
+def scan(path: Optional[str], no_git: bool, basic: bool, output_json: bool, no_cache: bool, clear_cache: bool) -> None:
     """Scan a codebase and generate an analysis report.
 
     PATH: Directory to analyze (defaults to current directory)
@@ -246,8 +383,19 @@ def scan(path: Optional[str], no_git: bool, basic: bool, output_json: bool) -> N
         console.print(f"\n[dim]Scanning:[/dim] [cyan]{scan_path}[/cyan]\n")
 
     try:
+        # Set up cache manager
+        cache_manager = None
+        if not no_cache:
+            cache_dir = Path(scan_path) / ".devscope_cache"
+            cache_manager = CacheManager(cache_dir, enabled=True)
+            
+            if clear_cache:
+                cache_manager.clear()
+                if not output_json:
+                    console.print("[dim]Cache cleared[/dim]\n")
+
         # Initialize analyzer
-        analyzer = CodebaseAnalyzer(scan_path, detect_git=not no_git, enable_intelligence=not basic)
+        analyzer = CodebaseAnalyzer(scan_path, detect_git=not no_git, enable_intelligence=not basic, cache_manager=cache_manager)
 
         # Run analysis with progress indicator (skip for JSON mode)
         if not output_json:
@@ -297,9 +445,13 @@ def scan(path: Optional[str], no_git: bool, basic: bool, output_json: bool) -> N
                 console.print()
 
             # Success message
-            console.print(
-                f"[green]✓[/green] Analysis complete in [cyan]{result.scan_time:.2f}s[/cyan]"
-            )
+            msg = f"[green]✓[/green] Analysis complete in [cyan]{result.scan_time:.2f}s[/cyan]"
+            if result.cache_stats and result.cache_stats["enabled"]:
+                hit_rate = result.cache_stats["hit_rate"]
+                time_saved = result.cache_stats["time_saved_estimate"]
+                if hit_rate > 0:
+                    msg += f" [dim](cache: {hit_rate:.0f}% hit rate, ~{time_saved:.2f}s saved)[/dim]"
+            console.print(msg)
 
     except Exception as e:
         if output_json:
@@ -324,10 +476,41 @@ def scan(path: Optional[str], no_git: bool, basic: bool, output_json: bool) -> N
 @cli.command()
 @click.argument("path", type=click.Path(exists=True), required=False)
 @click.option("--no-git", is_flag=True, help="Skip git repository detection")
-def ci(path: Optional[str], no_git: bool) -> None:
-    """CI-friendly analysis with JSON output and no interactive elements.
+@click.option(
+    "--fail-under",
+    type=click.Choice(["A", "B", "C", "D", "E", "F"], case_sensitive=False),
+    help="Fail if grade is below this threshold (A is best, F is worst)",
+)
+@click.option(
+    "--max-risk",
+    type=click.Choice(["Low", "Medium", "High"], case_sensitive=False),
+    help="Fail if risk level exceeds this threshold",
+)
+@click.option(
+    "--max-onboarding",
+    type=click.Choice(["Easy", "Moderate", "Hard"], case_sensitive=False),
+    help="Fail if onboarding difficulty exceeds this threshold",
+)
+@click.option("--json", "output_json", is_flag=True, help="Output results as JSON")
+@click.option("--no-cache", is_flag=True, help="Disable caching for this scan")
+@click.option("--clear-cache", is_flag=True, help="Clear cache before scanning")
+def ci(
+    path: Optional[str],
+    no_git: bool,
+    fail_under: Optional[str],
+    max_risk: Optional[str],
+    max_onboarding: Optional[str],
+    output_json: bool,
+    no_cache: bool,
+    clear_cache: bool,
+) -> None:
+    """CI-friendly analysis with threshold checking.
 
-    Designed for automation, always outputs JSON and performs full intelligence analysis.
+    Designed for automation, performs full intelligence analysis and checks
+    against specified thresholds. Exit codes:
+      - 0: Analysis passed all thresholds
+      - 1: Runtime error (invalid path, permissions, etc.)
+      - 2: One or more thresholds violated
 
     PATH: Directory to analyze (defaults to current directory)
     """
@@ -336,24 +519,123 @@ def ci(path: Optional[str], no_git: bool) -> None:
     scan_path = scan_path.resolve()
 
     try:
+        # Set up cache manager
+        cache_manager = None
+        if not no_cache:
+            cache_dir = Path(scan_path) / ".devscope_cache"
+            cache_manager = CacheManager(cache_dir, enabled=True)
+            
+            if clear_cache:
+                cache_manager.clear()
+
         # Initialize analyzer with full intelligence
-        analyzer = CodebaseAnalyzer(scan_path, detect_git=not no_git, enable_intelligence=True)
+        analyzer = CodebaseAnalyzer(scan_path, detect_git=not no_git, enable_intelligence=True, cache_manager=cache_manager)
 
         # Run analysis (no progress indicators)
         result = analyzer.analyze()
 
-        # Always output JSON
-        print(result.to_json())
+        # Build threshold configuration
+        thresholds = CIThresholds(
+            min_grade=Grade.from_string(fail_under) if fail_under else None,
+            max_risk=RiskLevel[max_risk.upper()] if max_risk else None,
+            max_onboarding=OnboardingDifficulty[max_onboarding.upper()] if max_onboarding else None,
+        )
+
+        # Check thresholds
+        ci_result = check_ci_thresholds(result, thresholds)
+
+        # Output results
+        if output_json:
+            # JSON output with CI section
+            output_dict = result.to_json_dict()
+            output_dict["ci"] = ci_result.to_dict()
+            print(json.dumps(output_dict, indent=2, sort_keys=True))
+        else:
+            # Human-readable CI summary
+            print_ci_summary(result, ci_result)
+
+        # Exit with appropriate code
+        if not ci_result.passed:
+            sys.exit(2)  # Threshold violations
 
     except Exception as e:
-        import json
+        if output_json:
+            error_output = {
+                "schema_version": "1.0",
+                "error": str(e),
+                "success": False,
+            }
+            print(json.dumps(error_output, indent=2))
+        else:
+            console.print(f"\n[red]Error:[/red] {str(e)}", style="bold")
 
-        error_output = {
-            "schema_version": "1.0",
-            "error": str(e),
-            "success": False,
-        }
-        print(json.dumps(error_output, indent=2))
+        sys.exit(1)  # Runtime error
+
+
+@cli.command()
+@click.argument("path", type=click.Path(exists=True), required=False)
+@click.option("--no-git", is_flag=True, help="Skip git repository detection")
+@click.option("--markdown", "output_markdown", is_flag=True, default=True, help="Output as markdown (default)")
+@click.option("--badges", is_flag=True, help="Include shields.io badges in markdown")
+@click.option("--compact", is_flag=True, help="Single-line condensed summary")
+@click.option("--json", "output_json", is_flag=True, help="Machine-readable JSON summary")
+@click.option("--no-cache", is_flag=True, help="Disable caching for this scan")
+@click.option("--clear-cache", is_flag=True, help="Clear cache before scanning")
+def summary(
+    path: Optional[str],
+    no_git: bool,
+    output_markdown: bool,
+    badges: bool,
+    compact: bool,
+    output_json: bool,
+    no_cache: bool,
+    clear_cache: bool,
+) -> None:
+    """Generate shareable markdown summary for READMEs and PRs.
+
+    Produces copy-paste-ready output for embedding in documentation,
+    pull request comments, audit reports, and CI summaries.
+
+    PATH: Directory to analyze (defaults to current directory)
+    """
+    # Determine scan path
+    scan_path = Path(path) if path else Path.cwd()
+    scan_path = scan_path.resolve()
+
+    try:
+        # Set up cache manager
+        cache_manager = None
+        if not no_cache:
+            cache_dir = Path(scan_path) / ".devscope_cache"
+            cache_manager = CacheManager(cache_dir, enabled=True)
+            
+            if clear_cache:
+                cache_manager.clear()
+
+        # Initialize analyzer with full intelligence
+        analyzer = CodebaseAnalyzer(
+            scan_path, detect_git=not no_git, enable_intelligence=True, cache_manager=cache_manager
+        )
+
+        # Run analysis (no progress indicators)
+        result = analyzer.analyze()
+
+        # Determine output format
+        if output_json:
+            # JSON summary mode
+            summary_dict = generate_json_summary(result)
+            print(json.dumps(summary_dict, indent=2, sort_keys=True))
+        elif compact:
+            # Compact one-line mode
+            compact_text = generate_compact_summary(result)
+            print(compact_text)
+        else:
+            # Markdown mode (default)
+            markdown_text = generate_markdown_summary(result, include_badges=badges)
+            print(markdown_text)
+
+    except Exception as e:
+        console.print(f"\n[red]Error:[/red] {str(e)}", style="bold")
         sys.exit(1)
 
 

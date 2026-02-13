@@ -195,6 +195,9 @@ class AnalysisResult:
     git_metrics: Optional[GitMetrics] = None
     health_score: Optional[CodeHealthScore] = None
 
+    # Performance fields (Phase 4) - optional
+    cache_stats: Optional[dict[str, Any]] = None
+
     def __post_init__(self) -> None:
         """Validate the analysis result."""
         if self.total_files < 0:

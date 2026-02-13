@@ -49,6 +49,9 @@ htmlcov/
 dmypy.json
 .pytype/
 
+# devscope cache
+.devscope_cache/
+
 # IDEs
 .vscode/
 .idea/
