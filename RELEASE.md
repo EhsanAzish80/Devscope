@@ -175,7 +175,17 @@ After successful release:
 
 - [ ] Verify package on PyPI: https://pypi.org/project/devscope
 - [ ] Test installation: `pipx install devscope`
-- [ ] Update README badges (PyPI version auto-updates)
+- [ ] Enable PyPI badges in README:
+  ```bash
+  # Uncomment PyPI badges (lines 7-8 in README.md)
+  # Remove "Coming soon" install section
+  # Move PyPI install to primary position
+  ```
+- [ ] Update install instructions:
+  ```bash
+  # Replace git clone method with:
+  pipx install devscope
+  ```
 - [ ] Announce on GitHub Discussions
 - [ ] Tweet/share on social media
 - [ ] Update any external documentation
