@@ -40,6 +40,10 @@ jobs:
     needs:
       - build
     runs-on: ubuntu-latest
+    
+    permissions:
+      id-token: write  # IMPORTANT: Required for trusted publishing
+    
     environment:
       name: testpypi
       url: https://test.pypi.org/p/devscope
@@ -62,6 +66,10 @@ jobs:
       - build
       - publish-to-testpypi
     runs-on: ubuntu-latest
+    
+    permissions:
+      id-token: write  # IMPORTANT: Required for trusted publishing
+    
     environment:
       name: pypi
       url: https://pypi.org/p/devscope
