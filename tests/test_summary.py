@@ -446,7 +446,8 @@ class TestHealthBlockGeneration:
             assert "**Repo:**" in health_block
             assert "**Files:**" in health_block
             assert "**Lines:**" in health_block
-            assert "⚡ Scan time:" in health_block
+            # Scan time is excluded by default for determinism
+            assert "⚡ Scan time:" not in health_block
 
     def test_generate_health_block_deterministic(self) -> None:
         """Test that health block generation is deterministic."""
