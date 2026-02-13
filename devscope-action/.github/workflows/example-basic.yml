@@ -1,0 +1,30 @@
+# Example: Basic PR Health Check
+
+name: Code Health
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  health-check:
+    name: Devscope Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for accurate git metrics
+      
+      - name: Run Devscope
+        uses: EhsanAzish80/devscope-action@v1
+        with:
+          fail-under: B
+          max-risk: Medium

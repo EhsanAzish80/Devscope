@@ -1,0 +1,56 @@
+# Example: Advanced CI/CD with Outputs
+
+name: Advanced Code Quality Pipeline
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  health-check:
+    name: Code Health Analysis
+    runs-on: ubuntu-latest
+    outputs:
+      grade: ${{ steps.devscope.outputs.grade }}
+      risk: ${{ steps.devscope.outputs.risk }}
+      health: ${{ steps.devscope.outputs.health }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Run Devscope
+        id: devscope
+        uses: EhsanAzish80/devscope-action@v1
+        with:
+          fail-under: B
+          max-risk: Medium
+          max-onboarding: Moderate
+      
+      - name: Report metrics
+        run: |
+          echo "### 📊 Code Health Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Grade:** ${{ steps.devscope.outputs.grade }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Risk:** ${{ steps.devscope.outputs.risk }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Onboarding:** ${{ steps.devscope.outputs.onboarding }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Score:** ${{ steps.devscope.outputs.health }}/100" >> $GITHUB_STEP_SUMMARY
+
+  notify:
+    name: Notify on Grade Change
+    needs: health-check
+    runs-on: ubuntu-latest
+    if: needs.health-check.outputs.grade == 'F'
+    
+    steps:
+      - name: Alert on critical health
+        run: |
+          echo "::error::Code health is critical (Grade: F)"
+          echo "Immediate action required to improve maintainability"

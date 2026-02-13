@@ -1,0 +1,57 @@
+# Example: Monorepo with Multiple Services
+
+name: Monorepo Health Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  health-matrix:
+    name: Analyze ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - frontend
+          - backend
+          - api
+          - shared
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Analyze ${{ matrix.service }}
+        uses: EhsanAzish80/devscope-action@v1
+        id: devscope
+        with:
+          path: ./services/${{ matrix.service }}
+          fail-under: C
+          max-risk: High
+      
+      - name: Report ${{ matrix.service }} metrics
+        run: |
+          echo "## ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "Grade: ${{ steps.devscope.outputs.grade }}" >> $GITHUB_STEP_SUMMARY
+          echo "Risk: ${{ steps.devscope.outputs.risk }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  aggregate:
+    name: Aggregate Results
+    needs: health-matrix
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Summary
+        run: |
+          echo "All services analyzed"
+          echo "Check individual job outputs for details"

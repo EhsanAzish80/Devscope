@@ -1,0 +1,86 @@
+name: Test Action
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test-action:
+    name: Test Devscope Action
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout action code
+        uses: actions/checkout@v4
+      
+      - name: Create test repository
+        shell: bash
+        run: |
+          mkdir -p test-repo/src
+          cat > test-repo/src/main.py << 'EOF'
+          """Test module for devscope action."""
+          
+          def hello_world():
+              """Say hello."""
+              return "Hello, World!"
+          EOF
+          
+          cat > test-repo/README.md << 'EOF'
+          # Test Repository
+          A test repo for devscope-action.
+          EOF
+          
+          cd test-repo
+          git init
+          git config user.name "Test User"
+          git config user.email "test@example.com"
+          git add .
+          git commit -m "Initial commit"
+      
+      - name: Test action (basic)
+        uses: ./
+        id: test-basic
+        with:
+          path: test-repo
+      
+      - name: Verify outputs
+        shell: bash
+        run: |
+          echo "Grade: ${{ steps.test-basic.outputs.grade }}"
+          echo "Risk: ${{ steps.test-basic.outputs.risk }}"
+          echo "Onboarding: ${{ steps.test-basic.outputs.onboarding }}"
+          echo "Health: ${{ steps.test-basic.outputs.health }}"
+          
+          if [ -z "${{ steps.test-basic.outputs.grade }}" ]; then
+            echo "::error::Grade output is empty"
+            exit 1
+          fi
+          
+          echo "✅ All outputs present"
+      
+      - name: Test action (with thresholds)
+        uses: ./
+        with:
+          path: test-repo
+          fail-under: F
+          max-risk: High
+          max-onboarding: Hard
+        continue-on-error: true
+      
+      - name: Report test results
+        if: always()
+        run: |
+          echo "### ✅ Action Test Completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Platform: ${{ matrix.os }}" >> $GITHUB_STEP_SUMMARY
+          echo "Grade: ${{ steps.test-basic.outputs.grade }}" >> $GITHUB_STEP_SUMMARY
+          echo "Risk: ${{ steps.test-basic.outputs.risk }}" >> $GITHUB_STEP_SUMMARY

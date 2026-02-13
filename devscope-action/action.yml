@@ -1,0 +1,203 @@
+name: 'Devscope Code Health Check'
+description: 'Analyze your codebase and post health metrics to PRs automatically'
+author: 'devscope contributors'
+
+branding:
+  icon: 'activity'
+  color: 'green'
+
+inputs:
+  path:
+    description: 'Path to analyze (default: current directory)'
+    required: false
+    default: '.'
+  fail-under:
+    description: 'Minimum grade required (A, B, C, D, F)'
+    required: false
+    default: ''
+  max-risk:
+    description: 'Maximum risk level allowed (Low, Medium, High)'
+    required: false
+    default: ''
+  max-onboarding:
+    description: 'Maximum onboarding difficulty (Easy, Moderate, Hard)'
+    required: false
+    default: ''
+  github-token:
+    description: 'GitHub token for posting PR comments'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  health:
+    description: 'Overall health score (0-100)'
+    value: ${{ steps.analyze.outputs.health }}
+  risk:
+    description: 'Risk level (Low, Medium, High)'
+    value: ${{ steps.analyze.outputs.risk }}
+  onboarding:
+    description: 'Onboarding difficulty (Easy, Moderate, Hard)'
+    value: ${{ steps.analyze.outputs.onboarding }}
+  grade:
+    description: 'Maintainability grade (A-F)'
+    value: ${{ steps.analyze.outputs.grade }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: Install pipx
+      shell: bash
+      run: |
+        python -m pip install --user pipx
+        python -m pipx ensurepath
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Cache pipx packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.local/pipx
+        key: ${{ runner.os }}-pipx-devscope-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pipx-devscope-
+
+    - name: Install devscope
+      shell: bash
+      run: |
+        if ! command -v devscope &> /dev/null; then
+          pipx install devscope
+        fi
+
+    - name: Run analysis
+      id: analyze
+      shell: bash
+      run: |
+        cd "${{ inputs.path }}"
+        
+        # Run compact summary for output
+        COMPACT_OUTPUT=$(devscope summary --compact 2>&1 || echo "Analysis failed")
+        
+        # Run JSON for structured data
+        if devscope summary --json > /tmp/devscope.json 2>&1; then
+          HEALTH=$(jq -r '.health_score.score_breakdown.overall // "0"' /tmp/devscope.json)
+          RISK=$(jq -r '.health_score.risk_level // "Unknown"' /tmp/devscope.json)
+          ONBOARDING=$(jq -r '.health_score.onboarding_difficulty // "Unknown"' /tmp/devscope.json)
+          GRADE=$(jq -r '.health_score.maintainability_grade // "F"' /tmp/devscope.json)
+          SCAN_TIME=$(jq -r '.scan_time // "0"' /tmp/devscope.json)
+        else
+          HEALTH="0"
+          RISK="Unknown"
+          ONBOARDING="Unknown"
+          GRADE="F"
+          SCAN_TIME="0"
+        fi
+        
+        # Escape for GitHub Actions
+        COMPACT_OUTPUT="${COMPACT_OUTPUT//'%'/'%25'}"
+        COMPACT_OUTPUT="${COMPACT_OUTPUT//$'\n'/'%0A'}"
+        COMPACT_OUTPUT="${COMPACT_OUTPUT//$'\r'/'%0D'}"
+        
+        echo "health=$HEALTH" >> $GITHUB_OUTPUT
+        echo "risk=$RISK" >> $GITHUB_OUTPUT
+        echo "onboarding=$ONBOARDING" >> $GITHUB_OUTPUT
+        echo "grade=$GRADE" >> $GITHUB_OUTPUT
+        echo "compact=$COMPACT_OUTPUT" >> $GITHUB_OUTPUT
+        echo "scan_time=$SCAN_TIME" >> $GITHUB_OUTPUT
+
+    - name: Post PR comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const compact = `${{ steps.analyze.outputs.compact }}`;
+          const grade = `${{ steps.analyze.outputs.grade }}`;
+          const risk = `${{ steps.analyze.outputs.risk }}`;
+          const onboarding = `${{ steps.analyze.outputs.onboarding }}`;
+          const scanTime = `${{ steps.analyze.outputs.scan_time }}`;
+          
+          const gradeEmoji = {
+            'A': '🟢', 'B': '🟢', 'C': '🟡', 'D': '🟠', 'F': '🔴'
+          }[grade] || '⚪';
+          
+          const riskEmoji = {
+            'Low': '🟢', 'Medium': '🟡', 'High': '🔴'
+          }[risk] || '⚪';
+          
+          const marker = '<!-- devscope-action-comment -->';
+          
+          const commentBody = `${marker}
+          ## 📊 Devscope Report
+          
+          **Maintainability:** ${gradeEmoji} **${grade}**  
+          **Risk:** ${riskEmoji} **${risk}**  
+          **Onboarding:** **${onboarding}**  
+          ⚡ **${scanTime}s**
+          
+          <details>
+          <summary>Full summary</summary>
+          
+          \`\`\`
+          ${compact}
+          \`\`\`
+          </details>
+          
+          ---
+          
+          *Analyze your repo → \`pipx install devscope\`*  
+          *Updated: ${new Date().toUTCString()}*
+          `;
+          
+          // Find existing comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const existingComment = comments.find(c => c.body?.includes(marker));
+          
+          if (existingComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: commentBody,
+            });
+            console.log('Updated existing comment');
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody,
+            });
+            console.log('Created new comment');
+          }
+
+    - name: Check thresholds
+      if: |
+        github.event_name == 'push' && 
+        (inputs.fail-under != '' || inputs.max-risk != '' || inputs.max-onboarding != '')
+      shell: bash
+      run: |
+        cd "${{ inputs.path }}"
+        
+        ARGS=""
+        if [ -n "${{ inputs.fail-under }}" ]; then
+          ARGS="$ARGS --fail-under ${{ inputs.fail-under }}"
+        fi
+        if [ -n "${{ inputs.max-risk }}" ]; then
+          ARGS="$ARGS --max-risk ${{ inputs.max-risk }}"
+        fi
+        if [ -n "${{ inputs.max-onboarding }}" ]; then
+          ARGS="$ARGS --max-onboarding ${{ inputs.max-onboarding }}"
+        fi
+        
+        echo "Running: devscope ci . $ARGS"
+        devscope ci . $ARGS
