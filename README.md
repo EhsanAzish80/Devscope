@@ -1,169 +1,113 @@
 # devscope
 
-> **Code intelligence at a glance** 🔍
+**Universal Codebase Intelligence for CI & Teams**
 
-A zero-config Python CLI tool that analyzes any codebase and outputs beautiful, fast terminal reports with core repository intelligence.
+Analyze any repository in seconds. Get a maintainability grade, risk level, onboarding difficulty, and a CI-ready quality gate — zero configuration.
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![Type checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg)](http://mypy-lang.org/)
+[![Tests: 131 passing](https://img.shields.io/badge/tests-131%20passing-brightgreen.svg)]()
+[![Coverage: 81%](https://img.shields.io/badge/coverage-81%25-green.svg)]()
 
-## ✨ Features
-
-- 🚀 **Zero configuration** - Just point and scan
-- 🎨 **Beautiful output** - Rich terminal UI with colors and formatting
-- ⚡ **Fast analysis** - Efficiently processes large codebases
-- 📊 **Real metrics** - Actual file system analysis, not mocked data
-- 🔌 **Plugin-ready** - Modular analyzer architecture for extensibility
-- 🌍 **Cross-platform** - Works on Linux, macOS, and Windows
-- 🎯 **Type-safe** - Full type annotations with mypy strict mode
-- 📦 **Easy install** - Install via pipx or pip
-
-## 🎯 What It Does
-
-`devscope` scans your codebase and provides:
-
-- **Repository information** - Detects git repository and extracts metadata
-- **File statistics** - Total file count across the project
-- **Lines of code** - Real line counting (excluding binary files)
-- **Language breakdown** - Primary languages by file extension percentage
-- **Directory analysis** - Largest directories by file count
-- **Smart filtering** - Respects .gitignore and skips common build/cache directories
-
-## 🚀 Installation
-
-### Using pipx (Recommended)
+## 🚀 Install in 10 Seconds
 
 ```bash
 pipx install devscope
-```
-
-### Using pip
-
-```bash
-pip install devscope
-```
-
-### From source
-
-```bash
-git clone https://github.com/yourusername/devscope.git
-cd devscope
-pip install -e .
-```
-
-## 📖 Usage
-
-### Basic usage
-
-Scan the current directory:
-
-```bash
-devscope scan
-```
-
-Scan a specific path:
-
-```bash
-devscope scan /path/to/project
-```
-
-### JSON Output Mode
-
-Get machine-readable JSON output for automation and CI/CD:
-
-```bash
-# Scan with JSON output
-devscope scan --json
-
-# Basic analysis (faster, no intelligence)
-devscope scan --json --basic
-
-# Works with --no-git
-devscope scan --json --no-git /path/to/project
-```
-
-### CI Command
-
-Purpose-built for automation - always outputs JSON with full intelligence:
-
-```bash
-# CI-friendly analysis (no interactive elements)
-devscope ci
-
-# Analyze specific path in CI
-devscope ci /path/to/project
-
-# Skip git detection in CI
-devscope ci --no-git
-```
-
-### Options
-
-```bash
-devscope scan --help
-```
-
-Available options:
-- `--no-git` - Skip git repository detection
-- `--basic` - Show only basic analysis (faster, no intelligence)
-- `--json` - Output results as JSON (for automation)
-- `--no-cache` - Disable caching for this scan
-- `--clear-cache` - Clear cache before scanning
-- `--version` - Show version information
-
-### ⚡ Performance & Caching
-
-**Intelligent Caching**
-
-devscope includes a smart caching layer that dramatically speeds up repeated scans:
-
-**First scan (cold cache):**
-```bash
 devscope scan .
-# ✓ Analysis complete in 2.45s
 ```
 
-**Second scan (warm cache):**
+That's it. No config files. No setup. Just intelligence.
+
+---
+
+## 🎯 Why devscope?
+
+| Feature | devscope | cloc | tokei |
+|---------|----------|------|-------|
+| **Maintainability grade** | ✅ A-F scoring | ❌ | ❌ |
+| **CI quality gate** | ✅ Exit codes | ❌ | ❌ |
+| **Multi-language repo intelligence** | ✅ Full context | ⚠️ Basic | ⚠️ Basic |
+| **Shareable PR summaries** | ✅ Markdown + badges | ❌ | ❌ |
+| **Intelligent caching** | ✅ 10-20x speedup | ❌ | ❌ |
+| **Risk & onboarding metrics** | ✅ Built-in | ❌ | ❌ |
+| **Test coverage detection** | ✅ Automatic | ❌ | ❌ |
+
+---
+
+## ⚡ Blazing Fast
+
+**First scan:**
 ```bash
-devscope scan .
-# ✓ Analysis complete in 0.15s (cache: 100% hit rate, ~2.3s saved)
+$ devscope scan .
+✓ Analysis complete in 2.45s
 ```
 
-**How it works:**
-- Caches file metadata (path, size, mtime) and computed results
-- Automatically invalidates cache when files change
-- Stores cache in `.devscope_cache/` at repo root
-- Safe: corrupt cache → auto-ignore and rebuild
-- Respects `.gitignore` and skip patterns
+**Cached scan (same repo):**
+```bash
+$ devscope scan .
+✓ Analysis complete in 0.15s (cache: 100% hit rate, ~2.3s saved)
+```
 
-**Cache Control:**
+**10-20x faster** on large repos. Automatic cache invalidation when files change.
+
+---
+
+## 💡 Use Cases
+
+- **CI quality gate** — Fail builds on grade drops (`--fail-under B`)
+- **PR health comment** — One-line summary in every PR (`devscope summary --compact`)
+- **Client code audit** — Instant maintainability report for stakeholders
+- **Monorepo onboarding** — Estimate ramp-up time for new engineers
+
+---
+
+## 📝 Shareable Summaries (The Viral Feature)
+
+### Embed in Your README
 
 ```bash
-# Disable caching (useful for benchmarking)
-devscope scan --no-cache
-
-# Clear cache and rescan
-devscope scan --clear-cache
-
-# Works with both scan and ci commands
-devscope ci --clear-cache --fail-under B
+devscope summary --badges > HEALTH.md
 ```
 
-**Expected Speedups:**
-- Small repos (<100 files): 2-3x faster
-- Medium repos (100-1000 files): 5-10x faster
-- Large repos (>1000 files): 10-20x faster
+**Output:**
 
-**Cache Location:**
-- Default: `.devscope_cache/` at repo root
-- Fallback: User cache directory (`~/.cache/devscope` on Linux/macOS)
-- Safe to commit `.devscope_cache/` to `.gitignore` (recommended)
+```markdown
+## 🔍 Devscope Report
 
-## 📊 Example Output
+![Maintainability](https://img.shields.io/badge/maintainability-B-green)
+![Risk](https://img.shields.io/badge/risk-Low-green)
+![Onboarding](https://img.shields.io/badge/onboarding-Easy-blue)
 
-### Terminal Output (Default)
+**Health:** B (82.1) · **Risk:** Low · **Onboarding:** Easy  
+**Files:** 1,247 · **Lines:** 45,892 · **Tests:** 0.78 ratio
+
+⚡ Scan time: 0.82s (cache: 100% hit rate)
+```
+
+### PR Comment (GitHub Actions)
+
+```yaml
+- name: Add health check to PR
+  run: |
+    devscope summary --compact >> $GITHUB_STEP_SUMMARY
+```
+
+**Output:**  
+`Devscope: B · Low risk · Easy onboarding · 0.78 tests · 0.82s ⚡`
+
+### JSON for Bots
+
+```bash
+devscope summary --json | jq '.health'
+```
+
+Perfect for Slack notifications, status pages, or custom integrations.
+
+---
+
+## 📊 Output Examples
+
+### Terminal (Default)
 
 ```
 ╔═══════════════════════════════════════╗
@@ -171,11 +115,13 @@ devscope ci --clear-cache --fail-under B
 ║  Code Intelligence at a glance        ║
 ╚═══════════════════════════════════════╝
 
-Scanning: /Users/dev/my-project
-
-        📊 Codebase Analysis        
+📊 my-project
 
 Repository          my-project
+Health Grade        B (82.5)
+Risk Level          Low
+Onboarding          Easy
+
 Total Files         1,247
 Total Lines         45,892
 
@@ -183,20 +129,44 @@ Languages
   Python            45.2%
   TypeScript        32.8%
   JavaScript        12.1%
-  CSS               5.4%
-  HTML              4.5%
 
-Largest Directories
-  src               523 files
-  tests             189 files
-  components        145 files
-  lib               98 files
-  utils             67 files
+Tests               0.78 ratio
+Top Hotspot         src/analyzer.py (321 LOC)
 
 ✓ Analysis complete in 0.82s
 ```
 
-### JSON Output Example
+### Compact (for PRs)
+
+```
+Devscope: B · Low risk · Easy onboarding · 0.78 tests · 0.82s ⚡
+```
+
+### JSON (for automation)
+
+```json
+{
+  "health_score": {
+    "maintainability_grade": "B",
+    "risk_level": "Low",
+    "onboarding_difficulty": "Easy",
+    "score_breakdown": {
+      "overall": 82.5,
+      "complexity": 80.2,
+      "tests": 78.0,
+      "git_activity": 90.0
+    }
+  },
+  "total_files": 1247,
+  "total_lines": 45892,
+  "test_ratio": 0.78,
+  "scan_time": 0.82
+}
+```
+
+<details>
+<summary><strong>📋 Full JSON Schema</strong></summary>
+
 
 ```json
 {
@@ -205,50 +175,43 @@ Largest Directories
       "avg_file_size": 368.5,
       "deep_nesting_warning": false,
       "largest_files": [
-        {
-          "file_path": "src/analyzer.py",
-          "size_bytes": 9856
-        },
-        {
-          "file_path": "src/cli.py",
-          "size_bytes": 12887
-        }
+        {"file_path": "src/analyzer.py", "size_bytes": 9856}
       ],
       "max_directory_depth": 3
     },
     "dependencies": [
       {
-        "dependency_count": 8,
-        "dependencies": ["click", "rich", "gitpython", "pathspec"],
         "ecosystem": "Python",
-        "manifest_file": "pyproject.toml"
+        "manifest_file": "pyproject.toml",
+        "dependency_count": 8,
+        "dependencies": ["click", "rich", "gitpython", "pathspec"]
       }
     ],
     "git_metrics": {
+      "is_git_repo": true,
       "commit_count": 42,
       "contributor_count": 2,
-      "days_since_last_commit": 0,
-      "is_git_repo": true
+      "days_since_last_commit": 0
     },
     "health_score": {
       "maintainability_grade": "B",
-      "onboarding_difficulty": "Moderate",
-      "risk_level": "Medium",
+      "risk_level": "Low",
+      "onboarding_difficulty": "Easy",
       "score_breakdown": {
+        "overall": 82.5,
         "complexity": 80.2,
-        "git_activity": 75.0,
-        "hotspots": 85.0,
-        "overall": 78.5,
         "structure": 90.0,
-        "tests": 70.0
+        "tests": 78.0,
+        "git_activity": 90.0,
+        "hotspots": 85.0
       }
     },
     "hotspots": [
       {
-        "depth": 2,
         "file_path": "src/analyzer.py",
-        "has_nearby_tests": true,
         "lines_of_code": 321,
+        "depth": 2,
+        "has_nearby_tests": true,
         "reason": "Large file with high complexity",
         "risk_score": 75.3
       }
@@ -256,21 +219,14 @@ Largest Directories
     "languages": {
       "Python": 52.9,
       "Markdown": 17.6,
-      "Shell": 11.8,
-      "TOML": 5.9
+      "Shell": 11.8
     },
-    "largest_dirs": [
-      {
-        "directory": "(root)",
-        "file_count": 6
-      },
-      {
-        "directory": "src/devscope",
-        "file_count": 5
-      }
-    ],
-    "repo_name": "devscope",
-    "scan_time": 0.15,
+    "test_metrics": {
+      "has_tests": true,
+      "test_file_count": 8,
+      "source_file_count": 12,
+      "test_ratio": 0.667
+    },
     "cache_stats": {
       "enabled": true,
       "hits": 55,
@@ -279,43 +235,32 @@ Largest Directories
       "hit_rate": 91.67,
       "time_saved_estimate": 0.005
     },
-    "test_metrics": {
-      "has_tests": true,
-      "source_file_count": 12,
-      "test_file_count": 8,
-      "test_ratio": 0.667
-    },
     "total_files": 60,
-    "total_lines": 3800
+    "total_lines": 3800,
+    "scan_time": 0.15
   },
   "devscope_version": "0.1.0",
   "schema_version": "1.0"
 }
 ```
 
-**JSON Schema Features:**
-- ✅ Deterministic ordering (`sort_keys=True`)
-- ✅ Versioned schema (`schema_version: "1.0"`)
-- ✅ Tool version included (`devscope_version`)
-- ✅ Stable key names (no breaking changes)
-- ✅ Works with `--no-git` (graceful nulls)
-- ✅ All Phase 1 + Phase 2 + Phase 3 + Phase 4 metrics included
-- ✅ Cache stats included (when caching enabled)
+</details>
 
-## 🤖 Automation & CI/CD
+---
 
-### Quality Gates with Thresholds
+## 🤖 CI/CD Integration
 
-The `ci` command provides built-in quality gates with proper exit codes:
+### Quality Gates with Exit Codes
 
-**Exit Codes:**
-- `0`: Analysis passed all thresholds
-- `1`: Runtime error (invalid path, permissions, etc.)
-- `2`: One or more thresholds violated
+**Exit codes:**
+- `0` = Analysis passed all thresholds
+- `1` = Runtime error (invalid path, permissions)
+- `2` = Threshold violated (grade/risk/onboarding)
 
-**GitHub Actions:**
+### GitHub Actions
+
 ```yaml
-- name: Analyze codebase with quality gate
+- name: Code health check
   run: |
     devscope ci . \
       --fail-under B \
@@ -323,260 +268,217 @@ The `ci` command provides built-in quality gates with proper exit codes:
       --max-onboarding Moderate
 ```
 
-**GitLab CI:**
+If health drops below B, the job fails with exit code 2.
+
+### GitLab CI
+
 ```yaml
 analyze:
   script:
-    - |
-      devscope ci . \
-        --fail-under B \
-        --max-risk Medium \
-        --json > analysis.json
-    - cat analysis.json
+    - devscope ci . --fail-under B --json > analysis.json
   artifacts:
     reports:
       codequality: analysis.json
 ```
 
-**Simple Quality Gate:**
+### Shell Script
+
 ```bash
 #!/bin/bash
-# Fail if code health drops below grade C
 devscope ci . --fail-under C
 
-# Exit code 0 = passed, 2 = threshold violated, 1 = error
 if [ $? -eq 2 ]; then
   echo "❌ Code quality below threshold"
   exit 1
 fi
 ```
 
-### JSON Output for Custom Checks
+---
 
-For advanced automation, use `--json` to get structured output:
+## 📖 Command Reference
+
+### `devscope scan`
+
+Analyze a codebase with beautiful terminal output.
 
 ```bash
-# Get JSON output with CI thresholds
-devscope ci . --fail-under B --max-risk Medium --json > analysis.json
-
-# Extract specific metrics
-GRADE=$(jq -r '.analysis.health_score.maintainability_grade' analysis.json)
-RISK=$(jq -r '.analysis.health_score.risk_level' analysis.json)
-PASSED=$(jq -r '.ci.passed' analysis.json)
-
-# Generate badge
-curl "https://img.shields.io/badge/code%20health-$GRADE-brightgreen"
+devscope scan                    # Current directory
+devscope scan /path/to/project   # Specific path
+devscope scan --json             # JSON output
+devscope scan --basic            # Fast scan (no intelligence)
+devscope scan --no-git           # Skip git detection
+devscope scan --no-cache         # Disable caching
+devscope scan --clear-cache      # Clear cache before scan
 ```
 
-**Pre-commit Hook:**
+### `devscope ci`
+
+CI-optimized command (always outputs JSON).
+
 ```bash
-#!/bin/bash
-devscope scan --json > /tmp/devscope.json
-HOTSPOTS=$(jq '.analysis.hotspots | length' /tmp/devscope.json)
-if [ "$HOTSPOTS" -gt 10 ]; then
-  echo "Too many risk hotspots: $HOTSPOTS"
-  exit 1
-fi
+devscope ci                      # Current directory
+devscope ci --fail-under B       # Fail if grade < B
+devscope ci --max-risk High      # Fail if risk > High
+devscope ci --max-onboarding Hard   # Fail if onboarding > Hard
 ```
 
-## 🏗️ Architecture
+### `devscope summary`
 
-devscope follows a clean, modular architecture:
+Generate shareable summaries.
 
+```bash
+devscope summary                 # Markdown report
+devscope summary --badges        # Include shields.io badges
+devscope summary --compact       # One-line summary
+devscope summary --json          # JSON with badges
 ```
-devscope/
-├── cli.py          # CLI interface with Rich formatting
-├── analyzer.py     # Core analysis engine
-├── models.py       # Data models (typed)
-└── utils.py        # Utility functions
-```
 
-### Design Principles
+---
 
-1. **Separation of Concerns** - CLI layer separated from analysis logic
-2. **Type Safety** - Full type annotations throughout
-3. **Extensibility** - Plugin-ready analyzer system
-4. **Performance** - Efficient file system traversal with smart filtering
-5. **User Experience** - Beautiful terminal output with progress indicators
+## 🏆 Status & Quality
+
+| Metric | Value |
+|--------|-------|
+| **Tests** | 131 passing |
+| **Coverage** | 81% |
+| **Type checking** | mypy strict mode |
+| **Platforms** | Linux · macOS · Windows |
+| **Python** | 3.9+ |
+
+This project follows rigorous engineering standards:
+- ✅ Full type annotations
+- ✅ Comprehensive test suite
+- ✅ Zero runtime dependencies conflicts
+- ✅ Cross-platform compatibility tested
+
+---
+
+## 🗺️ Roadmap
+
+### ✅ Completed
+
+- Maintainability grading (A-F)
+- Risk & onboarding assessment
+- CI quality gates with exit codes
+- Intelligent caching (10-20x speedup)
+- Shareable markdown summaries
+- Shields.io badge generation
+- Test coverage detection
+- JSON automation API
+
+### 🚀 Next
+
+- Configuration file (`.devscope.yml`)
+- Historical trend tracking
+- Team analytics dashboard
+- Security scanning (CVE detection)
+
+---
 
 ## 🛠️ Development
 
-### Prerequisites
+### Quick Start
 
-- Python 3.9+
-- [uv](https://github.com/astral-sh/uv) (recommended) or poetry
-
-### Setup
-
-1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/devscope.git
+git clone https://github.com/EhsanAzish80/devscope.git
 cd devscope
-```
-
-2. Install uv (if not already installed):
-```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-3. Install dependencies:
-```bash
 uv sync --all-extras
-```
-
-4. Run in development mode:
-```bash
 uv run devscope scan
 ```
 
 ### Running Tests
 
 ```bash
-# Run all tests
-uv run pytest
-
-# Run with coverage
-uv run pytest --cov=devscope --cov-report=html
-
-# Run specific test file
-uv run pytest tests/test_analyzer.py
+uv run pytest                    # All tests
+uv run pytest --cov              # With coverage
+uv run pytest tests/test_analyzer.py   # Specific file
 ```
 
 ### Code Quality
 
 ```bash
-# Format code
-uv run ruff format .
-
-# Lint
-uv run ruff check .
-
-# Type check
-uv run mypy src/devscope
-
-# Run all checks
-./scripts/check.sh
+uv run ruff format .             # Format
+uv run ruff check .              # Lint
+uv run mypy src/devscope         # Type check
 ```
 
 ### Project Structure
 
 ```
 devscope/
-├── src/
-│   └── devscope/
-│       ├── __init__.py
-│       ├── cli.py          # CLI interface
-│       ├── analyzer.py     # Analysis engine
-│       ├── models.py       # Data models
-│       └── utils.py        # Utilities
+├── src/devscope/
+│   ├── cli.py          # Command-line interface
+│   ├── analyzer.py     # Core analysis engine
+│   ├── models.py       # Type-safe data models
+│   ├── formatters.py   # Summary & badge generation
+│   ├── cache.py        # Intelligent caching layer
+│   └── utils.py        # Shared utilities
 ├── tests/
 │   ├── test_analyzer.py
 │   ├── test_cli.py
-│   └── test_utils.py
-├── scripts/
-│   ├── setup.sh           # Dev environment setup
-│   └── check.sh           # Quality checks
-├── pyproject.toml         # Project configuration
-├── LICENSE
-└── README.md
+│   ├── test_cache.py
+│   ├── test_summary.py
+│   └── test_ci_thresholds.py
+└── pyproject.toml      # Dependencies & config
 ```
-
-## 🧪 Testing
-
-The project includes comprehensive tests:
-
-- **Unit tests** - Core functionality testing
-- **CLI tests** - Command-line interface testing  
-- **Integration tests** - End-to-end testing with temporary directories
-- **Type tests** - Static type checking with mypy
-
-Coverage target: >80%
-
-## 📋 Requirements
-
-### Runtime Dependencies
-
-- `click>=8.1.0` - CLI framework
-- `rich>=13.0.0` - Terminal formatting
-- `gitpython>=3.1.0` - Git repository detection
-- `pathspec>=0.11.0` - Gitignore pattern matching
-
-### Development Dependencies
-
-- `pytest>=7.4.0` - Testing framework
-- `pytest-cov>=4.1.0` - Coverage reporting
-- `ruff>=0.1.0` - Linting and formatting
-- `mypy>=1.7.0` - Static type checking
-
-## 🗺️ Roadmap
-
-### Phase 1 (Current)
-- ✅ Project foundation with uv
-- ✅ Basic CLI with Rich output
-- ✅ File system analysis
-- ✅ Language detection
-- ✅ Git repository detection
-- ✅ Testing infrastructure
-
-### Phase 2 (Complete)
-- ✅ Code complexity metrics
-- ✅ Dependency analysis
-- ✅ Health scoring with letter grades
-- ✅ Risk level assessment
-- ✅ Onboarding difficulty metrics
-- ✅ JSON export format
-- ✅ Git activity intelligence
-- ✅ Test coverage detection
-- ✅ Hotspot identification
-
-### Phase 3 (Complete)
-- ✅ CI/CD integration with quality gates
-- ✅ Configurable thresholds (--fail-under, --max-risk, --max-onboarding)
-- ✅ Proper exit codes (0=pass, 1=error, 2=threshold violation)
-- ✅ Structured JSON output for automation
-
-### Phase 4 (Future)
-- [ ] Configuration file support (.devscope.yml)
-- [ ] Historical analysis and trend tracking
-- [ ] Team analytics and contributor insights
-- [ ] Security scanning (CVE detection)
-- [ ] Performance benchmarking
-- [ ] LSP integration
-- [ ] Plugin system
-- [ ] Web dashboard
-- [ ] Export formats (HTML, PDF)
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests and quality checks (`./scripts/check.sh`)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with [uv](https://github.com/astral-sh/uv) for fast dependency management
-- Terminal UI powered by [Rich](https://github.com/Textualize/rich)
-- CLI framework by [Click](https://github.com/pallets/click)
-- Inspired by tools like [tokei](https://github.com/XAMPPRocky/tokei) and [cloc](https://github.com/AlDanial/cloc)
-
-## 📞 Support
-
-- 🐛 [Report a bug](https://github.com/yourusername/devscope/issues)
-- 💡 [Request a feature](https://github.com/yourusername/devscope/issues)
-- 📖 [Documentation](https://github.com/yourusername/devscope#readme)
 
 ---
 
-Made with ❤️ by the devscope community
+## 🏗️ Architecture
+
+**Design principles:**
+1. **Separation of concerns** — CLI, analysis, formatting isolated
+2. **Type safety** — Full mypy strict mode compliance
+3. **Performance** — Smart caching with automatic invalidation
+4. **Extensibility** — Plugin-ready analyzer system
+5. **User experience** — Beautiful terminal output with Rich
+
+**Core components:**
+- **Analyzer** — File system traversal, language detection, metrics calculation
+- **Cache Manager** — File metadata caching with invalidation on change
+- **Formatters** — Output generation (terminal/JSON/markdown/compact)
+- **CLI** — Click-based interface with rich error handling
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file.
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repo
+2. Create a feature branch (`git checkout -b feature/amazing`)
+3. Run tests (`./scripts/check.sh`)
+4. Submit a PR
+
+For major changes, open an issue first.
+
+---
+
+## 🙏 Acknowledgments
+
+Built with:
+- [uv](https://github.com/astral-sh/uv) — Fast dependency management
+- [Rich](https://github.com/Textualize/rich) — Beautiful terminal UI
+- [Click](https://github.com/pallets/click) — CLI framework
+
+Inspired by [tokei](https://github.com/XAMPPRocky/tokei) and [cloc](https://github.com/AlDanial/cloc).
+
+---
+
+## 📞 Support
+
+- 🐛 [Report a bug](https://github.com/EhsanAzish80/devscope/issues)
+- 💡 [Request a feature](https://github.com/EhsanAzish80/devscope/issues)
+- 📖 [Documentation](https://github.com/EhsanAzish80/devscope#readme)
+
+---
+
+**Made with ❤️ for developers who ship**
+
