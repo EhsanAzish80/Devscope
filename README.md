@@ -20,6 +20,12 @@ pipx install devscope
 devscope scan .
 ```
 
+**On macOS:**
+```bash
+brew install devscope
+devscope scan .
+```
+
 **Or install from source:**
 ```bash
 git clone https://github.com/EhsanAzish80/Devscope.git
