@@ -121,9 +121,9 @@ This repository is continuously analyzed by devscope.
 ![Badge](https://img.shields.io/badge/cache-cold-lightgrey)
 
 **Repo:** Devscope  
-**Files:** 43  
-**Lines:** 8,893  
-**Languages:** Python (60%) · Markdown (21%) · Shell (12%)
+**Files:** 40  
+**Lines:** 8,514  
+**Languages:** Python (65%) · Markdown (15%) · Shell (12%)
 
 **Health:** B (82.5)  
 **Risk:** Low  
