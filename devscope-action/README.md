@@ -427,5 +427,3 @@ Built with:
 - 💬 [Discussions](https://github.com/EhsanAzish80/devscope-action/discussions)
 
 ---
-
-**Made with ❤️ for developers who ship**
