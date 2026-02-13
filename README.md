@@ -694,7 +694,4 @@ Inspired by [tokei](https://github.com/XAMPPRocky/tokei) and [cloc](https://gith
 - 💡 [Request a feature](https://github.com/EhsanAzish80/Devscope/issues)
 - 📖 [Documentation](https://github.com/EhsanAzish80/Devscope#readme)
 
----
-
-**Made with ❤️ for developers who ship**
 
