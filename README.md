@@ -68,25 +68,25 @@ See devscope analyzing popular open-source projects:
 ### [fastapi](https://github.com/tiangolo/fastapi)
 
 ```
-Devscope: A · Low risk · Moderate onboarding · 1.46 tests · 0.66s ⚡
+Devscope: A · Low risk · Moderate onboarding · 1.46 tests · 0.78s ⚡
 ```
 
 ### [django](https://github.com/django/django)
 
 ```
-Devscope: B · Low risk · Hard onboarding · 2.80 tests · 1.22s ⚡
+Devscope: B · Low risk · Hard onboarding · 2.80 tests · 1.45s ⚡
 ```
 
 ### [typer](https://github.com/tiangolo/typer)
 
 ```
-Devscope: A · Low risk · Moderate onboarding · 0.97 tests · 0.10s ⚡
+Devscope: A · Low risk · Moderate onboarding · 0.97 tests · 0.12s ⚡
 ```
 
 ### [requests](https://github.com/psf/requests)
 
 ```
-Devscope: B · Low risk · Easy onboarding · 1.82 tests · 0.05s ⚡
+Devscope: B · Low risk · Easy onboarding · 1.82 tests · 0.06s ⚡
 ```
 
 _Benchmarks run on GitHub Actions (2-core Linux VM)._
