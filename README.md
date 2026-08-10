@@ -4,6 +4,8 @@
 
 Analyze any repository in seconds. Get a maintainability grade, risk level, onboarding difficulty, and a CI-ready quality gate — zero configuration.
 
+Read the engineering article: [Parsing Unfamiliar Repositories into an Evidence-Based Report](https://3nsofts.com/insights/parsing-unfamiliar-repositories-evidence-based-report).
+
 [![CI Status](https://github.com/EhsanAzish80/Devscope/workflows/CI/badge.svg)](https://github.com/EhsanAzish80/Devscope/actions)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -851,5 +853,4 @@ Inspired by [tokei](https://github.com/XAMPPRocky/tokei) and [cloc](https://gith
 - 🐛 [Report a bug](https://github.com/EhsanAzish80/Devscope/issues)
 - 💡 [Request a feature](https://github.com/EhsanAzish80/Devscope/issues)
 - 📖 [Documentation](https://github.com/EhsanAzish80/Devscope#readme)
-
 
