@@ -76,7 +76,7 @@ Devscope: A · Low risk · Moderate onboarding · 1.48 tests · 0.86s ⚡
 ### [django](https://github.com/django/django)
 
 ```
-Devscope: B · Low risk · Hard onboarding · 2.80 tests · 1.54s ⚡
+Devscope: B · Low risk · Hard onboarding · 2.81 tests · 1.62s ⚡
 ```
 
 ### [typer](https://github.com/tiangolo/typer)
