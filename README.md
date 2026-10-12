@@ -70,7 +70,7 @@ See devscope analyzing popular open-source projects:
 ### [fastapi](https://github.com/tiangolo/fastapi)
 
 ```
-Devscope: A · Low risk · Moderate onboarding · 1.50 tests · 0.97s ⚡
+Devscope: A · Low risk · Moderate onboarding · 1.50 tests · 0.92s ⚡
 ```
 
 ### [django](https://github.com/django/django)
